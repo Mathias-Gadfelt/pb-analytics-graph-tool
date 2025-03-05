@@ -1,53 +1,69 @@
-import { CommonEntity } from "../../schemas/common-entity";
-import { EpexContinousAggFilter } from "../../schemas/entity-inputs";
-import { GlobalFilter } from "../../schemas/global-inputs";
-import db from "../../db";
-import { sql } from "kysely";
-import { intervalToMinutes } from "../utils";
+import { CommonEntity, EpexContinousAggFilter } from "@repo/entities";
+import pl from "nodejs-polars";
+import db from "../../db.js";
 
 export const epexGetter = async (
   entityFilter: EpexContinousAggFilter,
-  globalFilter: GlobalFilter,
 ): Promise<CommonEntity[]> => {
-  const { fromUtc, toUtc, intervalType } = globalFilter;
-  const { marketArea, product } = entityFilter;
-
-  console.log(product);
-  console.log(marketArea);
-  console.log(entityFilter);
-
-  const intervalMinutes = intervalToMinutes(intervalType);
+  const {
+    marketArea,
+    product,
+    deliveryMonth,
+    from,
+    to,
+    intervalType,
+    interval,
+  } = entityFilter;
 
   let query = db.intraday
     .selectFrom("epex_continous_agg")
-    .select([
-      sql`TIMESTAMP(DATE(timestamp_UTC), ADDTIME(TIME(timestamp_UTC), SEC_TO_TIME(-MOD(TIME_TO_SEC(TIME(timestamp_UTC)), ${intervalMinutes} * 60))))`.as(
-        "timestamp",
-      ),
-      sql`MAX(open)`.as("open"),
-      sql`MAX(close)`.as("close"),
-      sql`MAX(low)`.as("low"),
-      sql`MAX(high)`.as("high"),
-      sql`MAX(vwap)`.as("vwap"),
-      "market_area",
-      "product",
-    ])
-    .where("timestamp_UTC", ">=", new Date(fromUtc))
-    .where("timestamp_UTC", "<", new Date(toUtc));
-
-  if (product) {
-    query = query.where("product", "=", product);
-  }
+    .selectAll()
+    .where("delivery_date", ">=", new Date(from))
+    .where("delivery_date", "<", new Date(to))
+    .where("delivery_month", "=", deliveryMonth);
 
   if (marketArea) {
     query = query.where("market_area", "=", marketArea);
   }
 
-  const result = await query
-    .groupBy(["timestamp", "market_area", "product"])
-    .orderBy("market_area")
-    .orderBy("timestamp")
-    .execute();
+  if (product) {
+    query = query.where("product", "=", product);
+  }
 
-  return result as any;
+  const result = await query.execute();
+  if (result.length === 0) return [];
+
+  return pl
+    .DataFrame(result)
+    .sort("timestamp_UTC")
+    .groupByDynamic({
+      indexColumn: "timestamp_UTC",
+      every: `${interval + intervalType}`,
+      period: `${interval + intervalType}`,
+      start_by: "datapoint",
+      offset: "-1m",
+    })
+    .agg([
+      pl.col("open").first().alias("open"),
+      pl.col("close").last().alias("close"),
+      pl.col("high").max().alias("high"),
+      pl.col("low").min().alias("low"),
+      pl.col("timestamp_UTC").first().as("timestampUTC"),
+      pl
+        .col("vwap")
+        .cast(pl.Float64)
+        .mul(pl.col("volume_vwap").cast(pl.Float64))
+        .sum()
+        .div(pl.col("volume_vwap").cast(pl.Float64).sum())
+        .alias("vwap"),
+    ])
+    .select(
+      "timestampUTC", // Explicitly include timestamp_UTC in the selection
+      "high",
+      "low",
+      "open",
+      "close",
+      "vwap",
+    )
+    .toRecords() as any;
 };

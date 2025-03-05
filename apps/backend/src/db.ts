@@ -1,11 +1,6 @@
 import { Kysely, MysqlDialect } from "kysely";
 import { createPool } from "mysql2";
 
-export interface Database {
-  epex_continous_agg: EpexContinuousAgg;
-  eex_trades: EexTrades;
-}
-
 const createDialect = (dbName: string) =>
   new MysqlDialect({
     pool: createPool({
@@ -18,10 +13,20 @@ const createDialect = (dbName: string) =>
   });
 
 const db = {
-  intraday: new Kysely<Database>({ dialect: createDialect("intraday") }),
-  futures: new Kysely<Database>({ dialect: createDialect("futures") }),
+  intraday: new Kysely<IntradayDatabase>({
+    dialect: createDialect("intraday"),
+  }),
+  futures: new Kysely<FuturesDatabase>({ dialect: createDialect("futures") }),
 };
 export default db;
+
+export interface IntradayDatabase {
+  epex_continous_agg: EpexContinuousAgg;
+}
+
+export interface FuturesDatabase {
+  eex_trades: EexTrades;
+}
 
 // Type for epex_continous_agg model
 type EpexContinuousAgg = {

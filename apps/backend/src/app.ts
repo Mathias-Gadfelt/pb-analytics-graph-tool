@@ -1,21 +1,27 @@
-import { publicProcedure, router } from "./trpc";
 import { createHTTPServer } from "@trpc/server/adapters/standalone";
-import { querySchema } from "./schemas/query";
-import { getEntity, toEntityName } from "./entities/utils";
+import { publicProcedure, router } from "./trpc.js";
+import { querySchema } from "./schemas/query.js";
+import { CommonEntity, EntityId, toEntityName } from "@repo/entities";
+import { getEntityGetter } from "./entities/getter-map.js";
+import cors from "cors";
 
 const appRouter = router({
   test: publicProcedure.input(querySchema).query(async (opts) => {
     const { input } = opts;
-    const { entities, globalFilter } = input;
+    const { entities } = input;
 
-    return await Promise.all(
+    const allEntities: Record<EntityId, CommonEntity[]> = {};
+
+    await Promise.all(
       entities.map(async ({ id, filter: entityFilter }) => {
         const entityName = toEntityName(id);
-        const entity = getEntity(entityName);
-
-        return await { id: entity.get(entityFilter, globalFilter) };
+        const getter = getEntityGetter(entityName);
+        const result = await getter(entityFilter);
+        allEntities[id] = result;
       }),
     );
+
+    return allEntities;
   }),
 });
 
@@ -23,6 +29,7 @@ export type AppRouter = typeof appRouter;
 
 const server = createHTTPServer({
   router: appRouter,
+  middleware: cors(),
 });
 
 const PORT = 3000;

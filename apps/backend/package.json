@@ -3,23 +3,28 @@
     "version": "1.0.0",
     "description": "",
     "main": "app.ts",
+    "type": "module",
     "scripts": {
-        "dev": "nodemon src/app.ts"
+        "dev": "nodemon --exec \"node --loader ts-node/esm\" src/app.ts"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "devDependencies": {
+        "@types/cors": "^2.8.17",
         "@types/node": "^22.13.5",
         "nodemon": "3.1.9",
         "ts-node": "10.9.2",
         "typescript": "^5.7.3"
     },
     "dependencies": {
+        "@repo/entities": "link:../../packages/entities",
         "@trpc/client": "11.0.0-rc.808",
         "@trpc/server": "11.0.0-rc.808",
+        "cors": "^2.8.5",
         "kysely": "^0.27.5",
         "mysql2": "^3.12.0",
+        "nodejs-polars": "^0.18.0",
         "prisma": "6.3.1",
         "zod": "3.24.2"
     }

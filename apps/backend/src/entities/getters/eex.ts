@@ -1,45 +1,72 @@
-import { sql } from "kysely";
-import db from "../../db";
-import { EexTradeFilter } from "../../schemas/entity-inputs";
-import { GlobalFilter } from "../../schemas/global-inputs";
+import { EexTradeFilter } from "@repo/entities";
+import db from "../../db.js";
+import pl from "nodejs-polars";
 
-export const eexGetter = async (
-  entityFilter: EexTradeFilter,
-  globalFilter: GlobalFilter,
-) => {
-  const nMinutes = 10;
+export const eexGetter = async (entityFilter: EexTradeFilter) => {
+  const {
+    interval,
+    intervalType,
+    from,
+    to,
+    marketArea,
+    productCode,
+    deliveryPeriod,
+  } = entityFilter;
 
-  const result = await db.futures
+  let query = db.futures
     .selectFrom("eex_trades")
-    .select([
-      sql`TIMESTAMP(DATE(timestamp_UTC), ADDTIME(TIME(timestamp_UTC), SEC_TO_TIME(-MOD(TIME_TO_SEC(TIME(timestamp_UTC)), ${nMinutes} * 60))))`.as(
-        "timestamp",
-      ),
-      "market_area",
-      "delivery_period",
-      "delivery_start",
-      sql`SUBSTRING_INDEX(MIN(CONCAT(timestamp_UTC, '_', price)), '_', -1)`.as(
-        "open",
-      ),
-      sql`MIN(price)`.as("low"),
-      sql`MAX(price)`.as("high"),
-      sql`SUBSTRING_INDEX(MAX(CONCAT(timestamp_UTC, '_', price)), '_', -1)`.as(
-        "close",
-      ),
-      sql`SUM(price * volume_mwh) / SUM(volume_mwh)`.as("vwap"),
-      sql`SUM(volume_lots)`.as("volume_lots"),
-      sql`SUM(volume_mwh)`.as("volume_mwh"),
-    ])
-    .where("timestamp_CET", ">=", new Date("2025-02-20 08:00:00"))
-    .where("timestamp_CET", "<", new Date("2025-02-20 18:00:00"))
-    .where("load_type", "=", "BASE")
-    .groupBy(["timestamp", "market_area", "delivery_period", "delivery_start"])
-    .orderBy("market_area")
-    .orderBy("delivery_period")
-    .orderBy("delivery_start")
-    .orderBy("timestamp")
-    .execute();
+    .selectAll()
+    .where("delivery_end", ">=", new Date(from))
+    .where("delivery_end", "<", new Date(to))
+    .where("load_type", "=", "BASE");
 
-  console.log(result);
-  return [];
+  if (productCode) {
+    query = query.where("product_code", "=", productCode);
+  }
+  if (deliveryPeriod) {
+    query = query.where("delivery_period", "=", deliveryPeriod);
+  }
+  if (marketArea) {
+    query = query.where("market_area", "=", marketArea);
+  }
+
+  const result = await query.execute();
+  if (result.length === 0) return [];
+
+  let df = pl.DataFrame(result);
+
+  return df
+    .sort("timestamp_UTC")
+    .groupByDynamic({
+      indexColumn: "timestamp_UTC",
+      every: `${interval + intervalType}`,
+      period: `${interval + intervalType}`,
+      start_by: "datapoint",
+      offset: "-1m",
+    })
+    .agg([
+      pl.col("price").cast(pl.Float64).max().alias("high"),
+      pl.col("price").cast(pl.Float64).min().alias("low"),
+      pl.col("price").cast(pl.Float64).first().alias("open"),
+      pl.col("price").cast(pl.Float64).last().alias("close"),
+      pl.col("timestamp_UTC").first().as("timestampUTC"),
+
+      // VWAP Calculation: sum(price * volume) / sum(volume)
+      pl
+        .col("price")
+        .cast(pl.Float64)
+        .mul(pl.col("volume_mwh").cast(pl.Int64))
+        .sum()
+        .alias("vwap_numerator"),
+      pl.col("volume_mwh").cast(pl.Int64).sum().alias("vwap_denominator"),
+      pl
+        .col("price")
+        .cast(pl.Float64)
+        .mul(pl.col("volume_mwh").cast(pl.Int64))
+        .sum()
+        .div(pl.col("volume_mwh").cast(pl.Int64).sum())
+        .alias("vwap"),
+    ])
+    .select("timestampUTC", "high", "low", "open", "close", "vwap")
+    .toRecords() as any;
 };
