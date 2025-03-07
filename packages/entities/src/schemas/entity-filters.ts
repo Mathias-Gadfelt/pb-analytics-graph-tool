@@ -1,9 +1,10 @@
 import z from "zod";
+import { intervalType } from "./common-entity.js";
 
 const timeSchema = z.object({
   from: z.coerce.date(),
   to: z.coerce.date(),
-  intervalType: z.enum(["m", "h", "d", "w", "mo", "q", "y"]),
+  intervalType: intervalType,
   interval: z.number(),
 });
 
@@ -18,14 +19,17 @@ export const eexTradeFilterSchema = z.object({
 });
 export type EexTradeFilter = z.infer<typeof eexTradeFilterSchema>;
 
-export const epexContinousFilterSchema = z.object({
+export const epexAggFilterSchema = z.object({
   marketArea: z.string().optional(),
   product: z.string().optional(),
-  deliveryMonth: z.number(),
   ...timeSchema.shape,
 });
-export type EpexContinousAggFilter = z.infer<typeof epexContinousFilterSchema>;
+export type EpexContinousAggFilter = z.infer<typeof epexAggFilterSchema>;
 
-export type AnyFilterSchema =
+export type AnyEntityFilterSchema =
   | typeof eexTradeFilterSchema
-  | typeof epexContinousFilterSchema;
+  | typeof epexAggFilterSchema;
+
+export type AnyEntityFilter =
+  | z.infer<typeof eexTradeFilterSchema>
+  | z.infer<typeof epexAggFilterSchema>;

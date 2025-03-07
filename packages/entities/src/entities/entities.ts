@@ -1,11 +1,17 @@
 import {
   eexTradeFilterSchema,
-  epexContinousFilterSchema,
+  epexAggFilterSchema,
 } from "../schemas/entity-filters.js";
-import { createEntity } from "./factory.js";
+import { createEntityFilterSchemaMapping } from "./factory.js";
 
-const eexTradesEntity = createEntity("eex", eexTradeFilterSchema);
+const eexTradesEntity = createEntityFilterSchemaMapping(
+  "eex",
+  eexTradeFilterSchema,
+);
 
-const epexContinousEntity = createEntity("epex", epexContinousFilterSchema);
+const epexContinousEntity = createEntityFilterSchemaMapping(
+  "epex",
+  epexAggFilterSchema,
+);
 
-export const ENTITIES = [eexTradesEntity, epexContinousEntity] as const;
+export const CONFIGS = [eexTradesEntity, epexContinousEntity] as const;

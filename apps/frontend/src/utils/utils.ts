@@ -1,5 +1,5 @@
 import { ExistingEntities } from "@/routes";
-import { AnyEntityName, EntityId } from "@repo/entities";
+import { EntityName, EntityId } from "@repo/entities";
 
 export const idToUppercase = (id: string): string => {
   return id
@@ -12,7 +12,7 @@ const findFirstMissing = (nums: Set<number>) =>
     (i) => !nums.has(i),
   );
 
-export const createId = <TName extends AnyEntityName>(
+export const createId = <TName extends EntityName>(
   name: TName,
   existingEntities: ExistingEntities,
 ): EntityId<TName> => {

@@ -1,8 +1,7 @@
 import {
   EntityId,
-  EntityIdToName,
-  EntityWithInferedSchema,
-  getEntity,
+  ExtractEntityValuesMapping,
+  getEntityConfigMapping,
 } from "@repo/entities";
 import {
   Select,
@@ -29,10 +28,10 @@ import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/utils/styles";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
-import useExistingEntities from "@/hooks/useExistingEntities";
+import useEntities from "@/hooks/useEntities";
 
 type IEexForm<TEntityId extends EntityId<"eex">> = {
-  filter: EntityWithInferedSchema<EntityIdToName<TEntityId>>["filter"];
+  filter: ExtractEntityValuesMapping<TEntityId>["filter"];
   id: TEntityId;
   onSuccess: () => void;
 };
@@ -42,9 +41,9 @@ function EexForm<TEntityId extends EntityId<"eex">>({
   id,
   onSuccess,
 }: IEexForm<TEntityId>) {
-  const { update } = useExistingEntities();
-  const entity = getEntity("eex");
-  const formSchema = entity.filter;
+  const { update } = useEntities();
+  const entity = getEntityConfigMapping("eex");
+  const formSchema = entity.filterSchema;
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

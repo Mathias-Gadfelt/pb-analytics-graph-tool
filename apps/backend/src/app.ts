@@ -1,7 +1,7 @@
 import { createHTTPServer } from "@trpc/server/adapters/standalone";
 import { publicProcedure, router } from "./trpc.js";
 import { querySchema } from "./schemas/query.js";
-import { CommonEntity, EntityId, toEntityName } from "@repo/entities";
+import { MarketDataMapping, toEntityName } from "@repo/entities";
 import { getEntityGetter } from "./entities/getter-map.js";
 import cors from "cors";
 
@@ -10,7 +10,7 @@ const appRouter = router({
     const { input } = opts;
     const { entities } = input;
 
-    const allEntities: Record<EntityId, CommonEntity[]> = {};
+    const allEntities: MarketDataMapping = {};
 
     await Promise.all(
       entities.map(async ({ id, filter: entityFilter }) => {

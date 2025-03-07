@@ -12,13 +12,13 @@ import {
 import {
   EntityId,
   EntityIdToName,
-  EntityWithInferedSchema,
+  ExtractEntityValuesMapping,
   toEntityName,
 } from "@repo/entities";
 import EexForm from "../forms/EexForm";
 import EpexForm from "../forms/EpexForm";
 import { useState } from "react";
-import useExistingEntities from "@/hooks/useExistingEntities";
+import useEntities from "@/hooks/useEntities";
 
 interface IEntityCardProps {
   entity: ExistingEntities[number];
@@ -26,7 +26,7 @@ interface IEntityCardProps {
 
 type FormsMap<TEntityId extends EntityId = EntityId> = {
   [K in EntityIdToName<TEntityId>]: React.ComponentType<{
-    filter: EntityWithInferedSchema<K>["filter"];
+    filter: ExtractEntityValuesMapping<K>["filter"];
     id: EntityId<K>;
     onSuccess: () => void;
   }>;
@@ -40,7 +40,7 @@ const formsMap: FormsMap = {
 function EntityCard({ entity }: IEntityCardProps) {
   const Form = formsMap[toEntityName(entity.id)];
   const [open, setOpen] = useState(false);
-  const { remove } = useExistingEntities();
+  const { remove } = useEntities();
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -69,9 +69,8 @@ function EntityCard({ entity }: IEntityCardProps) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Opdater filtre</DialogTitle>
-          {/*TODO: Fix type*/}
           <Form
-            filter={entity.filter as any}
+            filter={entity.filter}
             id={entity.id as any}
             onSuccess={() => setOpen(false)}
           />

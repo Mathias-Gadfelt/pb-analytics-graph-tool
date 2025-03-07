@@ -1,12 +1,12 @@
 import { upsert } from "@/utils/utils";
-import { EntityId, EntityUnion } from "@repo/entities";
+import { EntityId, EntityValuesMappingUnion } from "@repo/entities";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 
-const useExistingEntities = () => {
+const useEntities = () => {
   const search = useSearch({ strict: false });
   const navigate = useNavigate();
 
-  const update = (newFilter: EntityUnion) => {
+  const update = (newFilter: EntityValuesMappingUnion) => {
     navigate({
       to: "/",
       search: {
@@ -30,4 +30,4 @@ const useExistingEntities = () => {
   return { entities: search.entities ?? [], update, remove };
 };
 
-export default useExistingEntities;
+export default useEntities;

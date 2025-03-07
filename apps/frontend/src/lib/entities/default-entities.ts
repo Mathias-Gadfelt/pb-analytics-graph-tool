@@ -1,11 +1,4 @@
-import { AnyEntityName, EntityFromName } from "@repo/entities";
-import { z } from "zod";
-
-type EntitiesDefaultMap = {
-  [TEntityName in AnyEntityName]: z.infer<
-    EntityFromName<TEntityName>["filter"]
-  >;
-};
+import { EntityName } from "@repo/entities";
 
 const defaultTimeObject = {
   from: new Date(new Date().setMonth(new Date().getMonth() - 1)), //A month ago
@@ -14,7 +7,7 @@ const defaultTimeObject = {
   intervalType: "h",
 } as const;
 
-const entitiesDefaultMap: EntitiesDefaultMap = {
+const entitiesDefaultMap = {
   eex: {
     ...defaultTimeObject,
   },
@@ -24,6 +17,5 @@ const entitiesDefaultMap: EntitiesDefaultMap = {
   },
 };
 
-export const getDefaultEntity = <TName extends AnyEntityName>(
-  entityName: TName,
-): EntitiesDefaultMap[TName] => entitiesDefaultMap[entityName];
+export const getDefaultEntity = <TName extends EntityName>(entityName: TName) =>
+  entitiesDefaultMap[entityName];

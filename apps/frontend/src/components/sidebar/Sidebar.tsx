@@ -1,9 +1,9 @@
-import useExistingEntities from "@/hooks/useExistingEntities";
 import NewEntityDropdown from "./NewEntityDropdown";
 import EntityCard from "../entities/EntityCard";
+import useEntities from "@/hooks/useEntities";
 
 function Sidebar() {
-  const { entities } = useExistingEntities();
+  const { entities } = useEntities();
 
   return (
     <div className="h-screen w-1/3 max-w-lg border-r flex flex-col px-4 gap-4">

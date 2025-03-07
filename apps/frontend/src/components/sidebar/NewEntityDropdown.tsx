@@ -7,16 +7,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { createId, idToUppercase, upsert } from "@/utils/utils";
-import { AnyEntityName, ENTITIES } from "@repo/entities";
 import { useNavigate } from "@tanstack/react-router";
 import { getDefaultEntity } from "@/lib/entities/default-entities";
-import useExistingEntities from "@/hooks/useExistingEntities";
+import { EntityName, CONFIGS } from "@repo/entities";
+import useEntities from "@/hooks/useEntities";
 
 function NewEntityDropdown() {
-  const { entities } = useExistingEntities();
+  const { entities } = useEntities();
   const navigate = useNavigate({ from: "/" });
 
-  const addNewEntity = (entityName: AnyEntityName) => {
+  const addNewEntity = (entityName: EntityName) => {
     const defaultObject = getDefaultEntity(entityName);
     const id = createId(entityName, entities);
     navigate({
@@ -35,7 +35,7 @@ function NewEntityDropdown() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        {ENTITIES.map((entity) => (
+        {CONFIGS.map((entity) => (
           <DropdownMenuItem
             key={entity.name}
             onClick={() => addNewEntity(entity.name)}

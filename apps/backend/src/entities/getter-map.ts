@@ -1,14 +1,18 @@
-import { AnyEntityName, CommonEntity, EntityFromName } from "@repo/entities";
+import {
+  EntityName,
+  ExtractEntityConfigMapping,
+  MarketData,
+} from "@repo/entities";
 import { eexGetter } from "./getters/eex.js";
 import { epexGetter } from "./getters/epex.js";
 import { z } from "zod";
 
-type Getter<TEntityName extends AnyEntityName> = (
-  entityFilter: z.infer<EntityFromName<TEntityName>["filter"]>,
-) => Promise<CommonEntity[]>;
+type Getter<TEntityName extends EntityName> = (
+  filterValue: z.infer<ExtractEntityConfigMapping<TEntityName>["filterSchema"]>,
+) => Promise<MarketData[]>;
 
 type EntitiesGetterMap = {
-  [TEntityName in AnyEntityName]: Getter<TEntityName>;
+  [TEntityName in EntityName]: Getter<TEntityName>;
 };
 
 const entitiesGetterMap: EntitiesGetterMap = {
@@ -16,6 +20,6 @@ const entitiesGetterMap: EntitiesGetterMap = {
   epex: epexGetter,
 };
 
-export const getEntityGetter = <TName extends AnyEntityName>(
+export const getEntityGetter = <TName extends EntityName>(
   entityName: TName,
 ): Getter<TName> => entitiesGetterMap[entityName];

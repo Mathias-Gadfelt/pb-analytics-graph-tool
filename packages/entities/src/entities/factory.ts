@@ -1,12 +1,15 @@
-import { AnyFilterSchema } from "../schemas/entity-filters.js";
-import { Entity } from "./types.js";
+import { AnyEntityFilterSchema } from "../schemas/entity-filters.js";
+import { EntityConfigMapping } from "./types.js";
 
-export function createEntity<
-  TName extends string,
-  TFilter extends AnyFilterSchema,
->(name: TName, filter: TFilter): Entity<TName, TFilter> {
+export function createEntityFilterSchemaMapping<
+  TEntityName extends string,
+  TFilterSchema extends AnyEntityFilterSchema,
+>(
+  name: TEntityName,
+  filterSchema: TFilterSchema,
+): EntityConfigMapping<TEntityName, TFilterSchema> {
   return {
     name,
-    filter,
+    filterSchema,
   };
 }

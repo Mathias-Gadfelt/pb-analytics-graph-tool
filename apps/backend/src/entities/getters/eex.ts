@@ -16,8 +16,8 @@ export const eexGetter = async (entityFilter: EexTradeFilter) => {
   let query = db.futures
     .selectFrom("eex_trades")
     .selectAll()
-    .where("delivery_end", ">=", new Date(from))
-    .where("delivery_end", "<", new Date(to))
+    .where("delivery_start", ">=", new Date(from))
+    .where("delivery_end", "<=", new Date(to))
     .where("load_type", "=", "BASE");
 
   if (productCode) {
@@ -49,6 +49,8 @@ export const eexGetter = async (entityFilter: EexTradeFilter) => {
       pl.col("price").cast(pl.Float64).min().alias("low"),
       pl.col("price").cast(pl.Float64).first().alias("open"),
       pl.col("price").cast(pl.Float64).last().alias("close"),
+      pl.lit(intervalType).alias("intervalType"),
+      pl.lit(interval).alias("interval"),
       pl.col("timestamp_UTC").first().as("timestampUTC"),
 
       // VWAP Calculation: sum(price * volume) / sum(volume)

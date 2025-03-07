@@ -1,12 +1,11 @@
-import Chart from "@/components/chart/Chart";
 import MainWindow from "@/components/main-window/MainWindow";
 import Sidebar from "@/components/sidebar/Sidebar";
-import { entityUnionSchema } from "@repo/entities";
+import { entityValuesMappingUnion } from "@repo/entities";
 import { createFileRoute } from "@tanstack/react-router";
 import z from "zod";
 
 const searchValidator = z.object({
-  entities: z.array(entityUnionSchema),
+  entities: z.array(entityValuesMappingUnion),
 });
 export type ExistingEntities = z.infer<typeof searchValidator>["entities"];
 
