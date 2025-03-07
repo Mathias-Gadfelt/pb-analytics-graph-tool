@@ -1,0 +1,9 @@
+{
+    "extends": "../../packages/typescript-config/base.json",
+    "ts-node": {
+        "esm": true
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}
