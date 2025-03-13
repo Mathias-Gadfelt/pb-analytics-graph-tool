@@ -52,7 +52,6 @@ const useChartColors = () => {
       increasing: {
         line: { color: `hsl(${hue}, 85%, 60%)` },
       },
-      vwapColor: `hsl(${hue}, 85%, 50%)`,
     };
   }, []);
 

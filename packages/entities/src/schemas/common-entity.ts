@@ -11,8 +11,6 @@ export const marketDataSchema = z.object({
   low: z.number(),
   vwap: z.number(),
   timestampUTC: z.string(),
-  intervalType: intervalType,
-  interval: z.number(),
 });
 export type MarketData = z.infer<typeof marketDataSchema>;
 export type MarketDataMapping = Record<EntityId, MarketData[]>;
