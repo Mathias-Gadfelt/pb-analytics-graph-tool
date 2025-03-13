@@ -4,9 +4,10 @@ import { querySchema } from "./schemas/query.js";
 import { MarketDataMapping, toEntityName } from "@repo/entities";
 import { getEntityGetter } from "./entities/getter-map.js";
 import cors from "cors";
+import cache from "./cache/cache.js";
 
 const appRouter = router({
-  test: publicProcedure.input(querySchema).query(async (opts) => {
+  data: publicProcedure.input(querySchema).query(async (opts) => {
     const { input } = opts;
     const { entities } = input;
 
@@ -14,9 +15,19 @@ const appRouter = router({
 
     await Promise.all(
       entities.map(async ({ id, filter: entityFilter }) => {
+        const maybeCachedValue = cache.get(entityFilter);
+        if (maybeCachedValue) {
+          console.log(`Cache hit on ${id}`);
+          allEntities[id] = maybeCachedValue;
+          return;
+        }
+        console.log(`Cache miss on ${id}`);
+
         const entityName = toEntityName(id);
         const getter = getEntityGetter(entityName);
         const result = await getter(entityFilter);
+
+        cache.insert(entityFilter, result);
         allEntities[id] = result;
       }),
     );

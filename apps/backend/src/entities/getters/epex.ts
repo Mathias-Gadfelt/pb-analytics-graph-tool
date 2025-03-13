@@ -1,16 +1,15 @@
 import { EpexContinousAggFilter } from "@repo/entities";
-import pl from "nodejs-polars";
 import db from "../../db.js";
+import { manipulateData } from "../../python/wrapper.js";
 
 export const epexGetter = async (entityFilter: EpexContinousAggFilter) => {
-  const { marketArea, product, from, to, intervalType, interval } =
-    entityFilter;
+  const { marketArea, product, from, to } = entityFilter;
 
   let query = db.intraday
     .selectFrom("epex_continous_agg")
     .selectAll()
-    .where("delivery_date", ">=", from)
-    .where("delivery_date", "<=", to)
+    .where("delivery_date", ">", from)
+    .where("delivery_date", "<", to)
     .where("delivery_month", "in", generateDeliveryMonths(from, to));
 
   if (marketArea) {
@@ -24,41 +23,11 @@ export const epexGetter = async (entityFilter: EpexContinousAggFilter) => {
   const result = await query.execute();
   if (result.length === 0) return [];
 
-  return pl
-    .DataFrame(result)
-    .sort("timestamp_UTC")
-    .groupByDynamic({
-      indexColumn: "timestamp_UTC",
-      every: `${interval + intervalType}`,
-      period: `${interval + intervalType}`,
-      start_by: "datapoint",
-      offset: "-1m",
-    })
-    .agg([
-      pl.col("open").first().alias("open"),
-      pl.col("close").last().alias("close"),
-      pl.col("high").max().alias("high"),
-      pl.col("low").min().alias("low"),
-      pl.lit(intervalType).alias("intervalType"),
-      pl.lit(interval).alias("interval"),
-      pl.col("timestamp_UTC").first().as("timestampUTC"),
-      pl
-        .col("vwap")
-        .cast(pl.Float64)
-        .mul(pl.col("volume_vwap").cast(pl.Float64))
-        .sum()
-        .div(pl.col("volume_vwap").cast(pl.Float64).sum())
-        .alias("vwap"),
-    ])
-    .select(
-      "timestampUTC", // Explicitly include timestamp_UTC in the selection
-      "high",
-      "low",
-      "open",
-      "close",
-      "vwap",
-    )
-    .toRecords() as any;
+  return await manipulateData({
+    script: "epex",
+    inputData: result as any,
+    filter: entityFilter,
+  });
 };
 
 const generateDeliveryMonths = (from: Date, to: Date): number[] => {

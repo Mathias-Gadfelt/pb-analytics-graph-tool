@@ -1,5 +1,5 @@
-import MainWindow from "@/components/main-window/MainWindow";
-import Sidebar from "@/components/sidebar/Sidebar";
+import MainWindow from "@/components/main-window/main-window";
+import Sidebar from "@/components/sidebar/sidebar";
 import { entityValuesMappingUnion } from "@repo/entities";
 import { createFileRoute } from "@tanstack/react-router";
 import z from "zod";

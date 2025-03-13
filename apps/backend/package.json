@@ -5,27 +5,33 @@
     "main": "app.ts",
     "type": "module",
     "scripts": {
-        "dev": "nodemon --exec \"node --loader ts-node/esm\" src/app.ts"
+        "dev": "nodemon --exec \"node --loader ts-node/esm\" src/app.ts",
+        "check-types": "tsc --noEmit"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
     "devDependencies": {
         "@types/cors": "^2.8.17",
-        "@types/node": "^22.13.5",
+        "@types/node": "^22.13.10",
+        "@types/pako": "^2.0.3",
         "nodemon": "3.1.9",
         "ts-node": "10.9.2",
-        "typescript": "^5.7.3"
+        "typescript": "^5.8.2"
     },
     "dependencies": {
         "@repo/entities": "link:../../packages/entities",
         "@trpc/client": "11.0.0-rc.808",
         "@trpc/server": "11.0.0-rc.808",
         "cors": "^2.8.5",
-        "kysely": "^0.27.5",
-        "mysql2": "^3.12.0",
+        "kysely": "^0.27.6",
+        "lru-cache": "^11.0.2",
+        "mysql2": "^3.13.0",
         "nodejs-polars": "^0.18.0",
+        "pako": "^2.1.0",
         "prisma": "6.3.1",
+        "python-shell": "^5.0.0",
+        "zlib": "^1.0.5",
         "zod": "3.24.2"
     }
 }
